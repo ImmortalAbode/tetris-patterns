@@ -1,0 +1,4 @@
+build/
+*.o
+tetris
+.DS_Store

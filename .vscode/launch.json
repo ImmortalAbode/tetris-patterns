@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Tetris",
+            "program": "${workspaceFolder}/build/tetris",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "make: build"
+        }
+    ]
+}
