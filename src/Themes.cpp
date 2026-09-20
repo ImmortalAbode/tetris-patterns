@@ -43,7 +43,7 @@ namespace
         }
     };
 
-    // Черный фон и темно-серые пустные клетки.
+    // Черный фон и темно-серые пустые клетки.
     class ClassicGridStyle : public GridStyle 
     {
     public:
@@ -109,7 +109,8 @@ namespace
             for (int r{0}; r <= ROWS; ++r)
             {
                 int y{ (r == ROWS) ? r * CELL - 1 : r * CELL };
-                line.setSize(sf::Vector2f(0, y));
+                line.setSize(sf::Vector2f(COLS * CELL, 1));
+                line.setPosition(sf::Vector2f(0, y));
                 target.draw(line);
             }
         }
@@ -117,7 +118,7 @@ namespace
 } // namespace
 
 // --------- Конкретные фабрики ---------
-// Каждый мето Create... по сути фабричный метод: возвращает продукт нужной темы.
+// Каждый метод Create... по сути фабричный метод: возвращает продукт нужной темы.
 
 std::unique_ptr<BlockStyle> ClassicThemeFactory::CreateBlockStyle() const
 {

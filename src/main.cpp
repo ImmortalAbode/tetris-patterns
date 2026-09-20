@@ -1,27 +1,13 @@
-// Шаг 1: "Наивный" Тетрис без паттернов. Все в одном файле, глобальные переменные,
-// никаких классов. Дальше будет рефакторинг этого под паттерны.
-
 #include <SFML/Graphics.hpp>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <memory>
+#include <string>
+#include <vector>
 
-// --------------- Константы ---------------
-constexpr int COLS{ 10 }; // ширина поля в клетках
-constexpr int ROWS{ 20 }; // высота поля в клетках
-constexpr int CELL{ 30 }; // размер клетки в пикселях
-
-// Цвета: индекс 0 - пустая клетка, 1..7 - цвета фигур.
-const sf::Color COLORS[8] = {
-    sf::Color(30, 30, 30),  // пусто
-    sf::Color(0, 255, 255), // I
-    sf::Color(255, 255, 0), // O
-    sf::Color(170, 0, 255), // T
-    sf::Color(0, 255, 0),   // S
-    sf::Color(255, 0, 0),   // Z
-    sf::Color(0, 0, 255),   // J
-    sf::Color(255, 165, 0), // L
-};
+#include "Config.h"
+#include "Themes.h"
 
 // ------------ Описание фигур -------------
 // size - сторона квадрата size x size, в котором лежит фигура (в нем же она вращается).
@@ -155,19 +141,25 @@ void moveDown()
         std::memset(board, 0, sizeof(board));   // рестарт
 }
 
-// --------------- Отрисовка ---------------
-void drawCell(sf::RenderWindow& window, int x, int y, int colorIndex)
-{
-    sf::RectangleShape rect(sf::Vector2f(CELL - 1, CELL - 1));
-    rect.setPosition(sf::Vector2f(x * CELL, y * CELL));
-    rect.setFillColor(COLORS[colorIndex]);
-    window.draw(rect);
-}
-
 int main() 
 {
     sf::RenderWindow window(sf::VideoMode({COLS * CELL, ROWS * CELL}), "Tetris");
     window.setFramerateLimit(60);
+
+    // --- Abstract Factory: набор тем и продукты текущей темы ---
+    std::vector<std::unique_ptr<ShapeAbstractFactory>> themes{};
+    themes.push_back(std::make_unique<ClassicThemeFactory>());
+    themes.push_back(std::make_unique<NeonThemeFactory>());
+    std::size_t themeIndex{0};
+
+    std::unique_ptr<BlockStyle> blockStyle = themes[themeIndex]->CreateBlockStyle();
+    std::unique_ptr<GridStyle> gridStyle = themes[themeIndex]->CreateGridStyle();
+
+    auto updateTitle = [&]()
+    {
+        window.setTitle(std::string("Tetris | Theme: ") + themes[themeIndex]->Name() + " (T - switch)");
+    };
+    updateTitle();
 
     std::srand(static_cast<unsigned>(std::time(nullptr)));
     spawnPiece();
@@ -194,6 +186,14 @@ int main()
                     moveDown();
                 else if (key->code == sf::Keyboard::Key::Up)
                     rotatePiece();
+                else if (key->code == sf::Keyboard::Key::T)
+                {
+                    // Смена темы: просим у новой фабрики новое семейство продуктов.
+                    themeIndex = (themeIndex + 1) % themes.size();
+                    blockStyle = themes[themeIndex]->CreateBlockStyle();
+                    gridStyle = themes[themeIndex]->CreateGridStyle();
+                    updateTitle();
+                }
             }
         }
 
@@ -205,16 +205,18 @@ int main()
         }
 
         // --- рисование ---
-        window.clear(sf::Color::Black);
+        window.clear(gridStyle->BackgroundColor());
+        gridStyle->Draw(window);    // фон и пустые клетки
 
         for (int r{0}; r < ROWS; ++r)
             for (int c{0}; c < COLS; ++c)
-                drawCell(window, c, r, board[r][c]);
-
+                if (board[r][c])
+                    blockStyle->Draw(window, c, r, board[r][c]);
+        
         for (int r{0}; r < pieceSize; ++r)
             for (int c{0}; c < pieceSize; ++c)
                 if (piece[r][c])
-                    drawCell(window, pieceX + c, pieceY + r, pieceColor);
+                    blockStyle->Draw(window, pieceX + c, pieceY + r, pieceColor);
 
         window.display();
     }
