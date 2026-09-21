@@ -1,8 +1,10 @@
 #include "Themes.h"
 #include "Config.h"
+#include "ShapePrototypeFactory.h"
 
-// Конкретные продукты двух тем. Лежат в анонимном namespace, то есть видны только
-// в этом файле: снаружи их можно получить лишь через фабрики.
+// Конкретные прототипы двух тем (ConcretePrototype). Лежат в анонимном namespace,
+// то есть видны только в этом файле: снаружи их можно получить лишь через фабрику,
+// которая клонирует эти образцы.
 namespace
 {
     // Индекс 0 не используется (пустые клетки рисует GridStyle), 1..7 - I, O, T, S, Z, J, L.
@@ -34,6 +36,11 @@ namespace
     class ClassicBlockStyle : public BlockStyle
     {
     public:
+        std::unique_ptr<BlockStyle> Clone() const override
+        {
+            return std::make_unique<ClassicBlockStyle>(*this);
+        }
+
         void Draw(sf::RenderTarget& target, int cellX, int cellY, int colorIndex) const override
         {
             sf::RectangleShape rect(sf::Vector2f(CELL - 1, CELL - 1));
@@ -47,6 +54,11 @@ namespace
     class ClassicGridStyle : public GridStyle 
     {
     public:
+        std::unique_ptr<GridStyle> Clone() const override
+        {
+            return std::make_unique<ClassicGridStyle>(*this);
+        }
+
         sf::Color BackgroundColor() const override
         {
             return sf::Color::Black;
@@ -73,6 +85,11 @@ namespace
     class NeonBlockStyle : public BlockStyle
     {
     public:
+        std::unique_ptr<BlockStyle> Clone() const override
+        {
+            return std::make_unique<NeonBlockStyle>(*this);
+        }
+
         void Draw(sf::RenderTarget& target, int cellX, int cellY, int colorIndex) const override
         {
             const sf::Color& color = NEON_COLORS[colorIndex];
@@ -89,6 +106,11 @@ namespace
     class NeonGridStyle : public GridStyle
     {
     public:
+        std::unique_ptr<GridStyle> Clone() const override
+        {
+            return std::make_unique<NeonGridStyle>(*this);
+        }
+
         sf::Color BackgroundColor() const override 
         {
             return sf::Color(5, 5, 20);
@@ -117,25 +139,20 @@ namespace
     };
 } // namespace
 
-// --------- Конкретные фабрики ---------
-// Каждый метод Create... по сути фабричный метод: возвращает продукт нужной темы.
+// --------- Темы = наборы прототипов ---------
+// Здесь единственный раз создаются образцы (make_unique). Дальше фабрика только
+// клонирует их. Одна тема - пара прототипов, подходящих друг другу; фабрика темы -
+// объект ShapePrototypeFactory, зарегистрированный в реестре под именем темы.
 
-std::unique_ptr<BlockStyle> ClassicThemeFactory::CreateBlockStyle() const
+void RegisterThemes()
 {
-    return std::make_unique<ClassicBlockStyle>();
-}
+    ShapeAbstractFactory::Register(std::make_unique<ShapePrototypeFactory>(
+        "Classic",
+        std::make_unique<ClassicBlockStyle>(),
+        std::make_unique<ClassicGridStyle>()));
 
-std::unique_ptr<GridStyle> ClassicThemeFactory::CreateGridStyle() const 
-{
-    return std::make_unique<ClassicGridStyle>();
-}
-
-std::unique_ptr<BlockStyle> NeonThemeFactory::CreateBlockStyle() const
-{
-    return std::make_unique<NeonBlockStyle>();
-}
-
-std::unique_ptr<GridStyle> NeonThemeFactory::CreateGridStyle() const 
-{
-    return std::make_unique<NeonGridStyle>();
+    ShapeAbstractFactory::Register(std::make_unique<ShapePrototypeFactory>(
+        "Neon",
+        std::make_unique<NeonBlockStyle>(),
+        std::make_unique<NeonGridStyle>()));
 }

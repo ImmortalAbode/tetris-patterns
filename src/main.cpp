@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Config.h"
+#include "ShapeAbstractFactory.h"
 #include "Themes.h"
 
 // ------------ Описание фигур -------------
@@ -146,18 +147,17 @@ int main()
     sf::RenderWindow window(sf::VideoMode({COLS * CELL, ROWS * CELL}), "Tetris");
     window.setFramerateLimit(60);
 
-    // --- Abstract Factory: набор тем и продукты текущей темы ---
-    std::vector<std::unique_ptr<ShapeAbstractFactory>> themes{};
-    themes.push_back(std::make_unique<ClassicThemeFactory>());
-    themes.push_back(std::make_unique<NeonThemeFactory>());
-    std::size_t themeIndex{0};
+    // --- Abstract Factory + Prototype + Singleton (реестр) ---
+    // Темы регистрируют свои фабрики в реестре. Instance() возвращает активную из них
+    // (стартовая тема - из переменной окружения TETRIS_THEME, по умолчанию Classic).
+    RegisterThemes();
 
-    std::unique_ptr<BlockStyle> blockStyle = themes[themeIndex]->CreateBlockStyle();
-    std::unique_ptr<GridStyle> gridStyle = themes[themeIndex]->CreateGridStyle();
+    std::unique_ptr<BlockStyle> blockStyle = ShapeAbstractFactory::Instance().CreateBlockStyle();
+    std::unique_ptr<GridStyle> gridStyle = ShapeAbstractFactory::Instance().CreateGridStyle();
 
     auto updateTitle = [&]()
     {
-        window.setTitle(std::string("Tetris | Theme: ") + themes[themeIndex]->Name() + " (T - switch)");
+        window.setTitle(std::string("Tetris | Theme: ") + ShapeAbstractFactory::Instance().Name() + " (T - switch)");
     };
     updateTitle();
 
@@ -188,10 +188,11 @@ int main()
                     rotatePiece();
                 else if (key->code == sf::Keyboard::Key::T)
                 {
-                    // Смена темы: просим у новой фабрики новое семейство продуктов.
-                    themeIndex = (themeIndex + 1) % themes.size();
-                    blockStyle = themes[themeIndex]->CreateBlockStyle();
-                    gridStyle = themes[themeIndex]->CreateGridStyle();
+                    // Смена темы: активной становится следующая фабрика из реестра,
+                    // у нее просим новое семейство продуктов (Instance() уже другая).
+                    ShapeAbstractFactory::SelectNext();
+                    blockStyle = ShapeAbstractFactory::Instance().CreateBlockStyle();
+                    gridStyle = ShapeAbstractFactory::Instance().CreateGridStyle();
                     updateTitle();
                 }
             }
