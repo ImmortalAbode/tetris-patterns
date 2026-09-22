@@ -3,3 +3,5 @@ build/
 tetris
 .DS_Store
 claude.md
+report_*.html
+results.csv

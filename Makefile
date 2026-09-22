@@ -1,5 +1,6 @@
 # Makefile для проекта Tetris (macOS, clang++, SFML 3 из Homebrew).
-# Команды: make (собрать), make run (собрать и запустить), make clean (удалить сборку).
+# Команды: make (собрать), make run (собрать и запустить, режим Normal),
+# make run-sprint (собрать и запустить в режиме Sprint), make clean (удалить сборку).
 
 # Компилятор из Xcode Command Line Tools.
 CXX := clang++
@@ -40,9 +41,15 @@ $(BUILD_DIR)/%.o: src/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(SFML_CFLAGS) -c $< -o $@
 
-# Собрать и запустить.
+# Собрать и запустить (режим Normal).
 run: $(TARGET)
 	./$(TARGET)
+
+# Собрать и запустить в режиме Sprint. "sprint" передаётся программе как
+# argv[1], а не через make - в этом весь смысл отдельной цели: сам make
+# аргументов не принимает, "make run sprint" пытался бы собрать цель "sprint".
+run-sprint: $(TARGET)
+	./$(TARGET) sprint
 
 # Удалить всё, что создала сборка.
 clean:
@@ -51,5 +58,5 @@ clean:
 # Подключить .d файлы зависимостей (если их ещё нет — не ошибка).
 -include $(DEPS)
 
-# run, clean и all — не файлы, а команды.
-.PHONY: all run clean
+# run, run-sprint, clean и all — не файлы, а команды.
+.PHONY: all run run-sprint clean

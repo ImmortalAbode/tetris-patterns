@@ -31,8 +31,12 @@ ShapeAbstractFactory* ShapeAbstractFactory::s_instance = nullptr;
 void ShapeAbstractFactory::Register(std::unique_ptr<ShapeAbstractFactory> factory)
 {
     std::string key = ToLower(factory->Name());
-    Registry()[key] = std::move(factory);
+
+    // Если фабрика с таким именем уже есть, новую отбрасываем: замена удалила бы
+    // старую, а s_instance мог бы указывать на нее (висячий указатель).
+    Registry().try_emplace(key, std::move(factory));
 }
+
 
 ShapeAbstractFactory* ShapeAbstractFactory::Lookup(const std::string& name)
 {
