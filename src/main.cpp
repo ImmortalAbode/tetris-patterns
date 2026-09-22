@@ -1,5 +1,7 @@
 #include "Config.h"
 #include "GameBoard.h"
+#include "IInputHandler.h"
+#include "KeyboardInputAdapter.h"
 #include "Piece.h"
 #include "PieceFactories.h"
 #include "ReportGenerators.h"
@@ -92,6 +94,8 @@ int main(int argc, char** argv)
     // (стартовая тема - из переменной окружения TETRIS_THEME, по умолчанию Classic).
     RegisterThemes();
 
+    // --- Adapter: main работает только с IInputHandler, не с SFML-событиями ---
+    std::unique_ptr<IInputHandler> inputHandler = std::make_unique<KeyboardInputAdapter>(window);
     std::unique_ptr<BlockStyle> blockStyle = ShapeAbstractFactory::Instance().CreateBlockStyle();
     std::unique_ptr<GridStyle> gridStyle = ShapeAbstractFactory::Instance().CreateGridStyle();
 
@@ -117,31 +121,38 @@ int main(int argc, char** argv)
     while (window.isOpen())
     {
         // --- ввод ---
-        while (const std::optional<sf::Event> event = window.pollEvent())
+        // main опрашивает действия через IInputHandler и не знает, что за ним
+        // стоит SFML: тот же цикл работал бы и с любым другим адаптером ввода.
+        InputAction action{InputAction::None};
+        while ((action = inputHandler->PollAction()) != InputAction::None)
         {
-            if (event->is<sf::Event::Closed>())
+            switch (action)
             {
-                window.close();
-            }
-            else if (const auto* key = event->getIf<sf::Event::KeyPressed>())
-            {
-                if (key->code == sf::Keyboard::Key::Left)
+                case InputAction::Quit:
+                    window.close();
+                    break;
+                case InputAction::MoveLeft:
                     TryMove(*piece, -1);
-                else if (key->code == sf::Keyboard::Key::Right)
+                    break;
+                case InputAction::MoveRight:
                     TryMove(*piece, 1);
-                else if (key->code == sf::Keyboard::Key::Down)
+                    break;
+                case InputAction::SoftDrop:
                     MoveDown(piece, *pieceFactory);
-                else if (key->code == sf::Keyboard::Key::Up)
+                    break;
+                case InputAction::RotateCW:
                     RotatePiece(*piece);
-                else if (key->code == sf::Keyboard::Key::T)
-                {
+                    break;
+                case InputAction::SwitchTheme:
                     // Смена темы: активной становится следующая фабрика из реестра,
                     // у нее просим новое семейство продуктов (Instance() уже другая).
                     ShapeAbstractFactory::SelectNext();
                     blockStyle = ShapeAbstractFactory::Instance().CreateBlockStyle();
                     gridStyle = ShapeAbstractFactory::Instance().CreateGridStyle();
                     updateTitle();
-                }
+                    break;
+                case InputAction::None:
+                    break;
             }
         }
 

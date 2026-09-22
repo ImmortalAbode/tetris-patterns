@@ -137,6 +137,62 @@ namespace
             }
         }
     };
+
+    // ---------- Тема Retro ----------
+    // Монохромный "фосфорный" зеленый, как на старых терминалах и ранних портативных
+    // консолях (например, оригинальный Game Boy тоже рисовал Тетрис одним цветом).
+    // В отличие от Classic и Neon, colorIndex здесь не используется для выбора цвета -
+    // все фигуры одного оттенка зеленого, различать их приходится по форме, а не по цвету.
+    const sf::Color RETRO_COLOR{60, 255, 60};
+    const sf::Color RETRO_BACKGROUND{0, 10, 0};
+    const sf::Color RETRO_EMPTY_CELL{0, 40, 0};
+
+    // Сплошной монохромный зеленый квадрат.
+    class RetroBlockStyle : public BlockStyle
+    {
+    public:
+        std::unique_ptr<BlockStyle> Clone() const override
+        {
+            return std::make_unique<RetroBlockStyle>(*this);
+        }
+
+        void Draw(sf::RenderTarget& target, int cellX, int cellY, int /*colorIndex*/) const override
+        {
+            sf::RectangleShape rect(sf::Vector2f(CELL - 1, CELL - 1));
+            rect.setPosition(sf::Vector2f(cellX * CELL, cellY * CELL));
+            rect.setFillColor(RETRO_COLOR);
+            target.draw(rect);
+        }
+    };
+
+    // Почти черный фон с легким зеленым оттенком и темно-зелеными пустыми клетками.
+    class RetroGridStyle : public GridStyle
+    {
+    public:
+        std::unique_ptr<GridStyle> Clone() const override
+        {
+            return std::make_unique<RetroGridStyle>(*this);
+        }
+
+        sf::Color BackgroundColor() const override
+        {
+            return RETRO_BACKGROUND;
+        }
+
+        void Draw(sf::RenderTarget& target) const override
+        {
+            sf::RectangleShape rect(sf::Vector2f(CELL - 1, CELL - 1));
+            rect.setFillColor(RETRO_EMPTY_CELL);
+            for (int r{0}; r < ROWS; ++r)
+            {
+                for (int c{0}; c < COLS; ++c)
+                {
+                    rect.setPosition(sf::Vector2f(c * CELL, r * CELL));
+                    target.draw(rect);
+                }
+            }
+        }
+    };
 } // namespace
 
 // --------- Темы = наборы прототипов ---------
@@ -155,4 +211,9 @@ void RegisterThemes()
         "Neon",
         std::make_unique<NeonBlockStyle>(),
         std::make_unique<NeonGridStyle>()));
+
+    ShapeAbstractFactory::Register(std::make_unique<ShapePrototypeFactory>(
+        "Retro",
+        std::make_unique<RetroBlockStyle>(),
+        std::make_unique<RetroGridStyle>()));
 }
