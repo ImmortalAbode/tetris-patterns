@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "Config.h"
-#include "Piece.h"
+#include "Tetromino.h"
 
 // =====================================================================
 // ПАТТЕРН: FACTORY METHOD (Фабричный метод) + PROTOTYPE
@@ -13,15 +13,15 @@
 // режима (Normal - равномерно случайно, Sprint - "мешок из 7"), но остальной
 // код (main) не должен знать, какой именно способ сейчас используется.
 // CreatePiece() - фабричный метод: каждый подкласс решает, какую фигуру и как
-// выбрать, а возвращает всегда один и тот же тип - unique_ptr<Piece>.
+// выбрать, а возвращает всегда один и тот же тип - unique_ptr<Tetromino>.
 //
 // Prototype внутри: сами фигуры фабрика не собирает из таблицы "на лету",
-// а клонирует готовый образец (Piece::Clone()) из общего набора прототипов
+// а клонирует готовый образец (Tetromino::Clone()) из общего набора прототипов
 // (7 штук - I, O, T, S, Z, J, L), см. PieceFactories.cpp. Это тот же прием,
 // что и в ShapePrototypeFactory для тем оформления.
 //
 // Участники:
-//   - Product          = Piece (Piece.h)
+//   - Product          = Tetromino (Tetromino.h) - составной объект (Composite)
 //   - Creator          = PieceFactory (этот файл)
 //   - ConcreteCreator  = NormalPieceFactory, SprintPieceFactory (PieceFactories.h)
 // =====================================================================
@@ -31,11 +31,11 @@ public:
     virtual ~PieceFactory() = default;
 
     // Фабричный метод: вернуть следующую фигуру для спавна.
-    virtual std::unique_ptr<Piece> CreatePiece() = 0;
+    virtual std::unique_ptr<Tetromino> CreatePiece() = 0;
 
 protected:
     // Общий для всех подклассов шаг: поставить фигуру по центру верха поля.
-    static void PlaceAtSpawn(Piece& piece)
+    static void PlaceAtSpawn(Tetromino& piece)
     {
         piece.SetPosition(COLS / 2 - piece.Size() / 2, 0);
     }

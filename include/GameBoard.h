@@ -2,7 +2,7 @@
 #define GAMEBOARD_H
 
 #include "Config.h"
-#include "Piece.h"
+#include "Tetromino.h"
 
 // =====================================================================
 // ПАТТЕРН: SINGLETON (Одиночка) - GameBoard
@@ -33,10 +33,11 @@ public:
     }
 
     // Пересекается ли фигура со стенами, полом или осевшими клетками.
-    bool Collides(const Piece& piece) const;
+    // Composite: перебираем не клетки квадрата фигуры, а прямо ее потомков (Blocks()).
+    bool Collides(const Tetromino& piece) const;
 
     // Вписать фигуру в поле (она приземлилась).
-    void Lock(const Piece& piece);
+    void Lock(const Tetromino& piece);
 
     // Удалить заполненные строки, вернуть их количество.
     int ClearLines();

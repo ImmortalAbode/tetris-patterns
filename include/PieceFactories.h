@@ -15,7 +15,7 @@
 class NormalPieceFactory : public PieceFactory
 {
 public:
-    std::unique_ptr<Piece> CreatePiece() override;
+    std::unique_ptr<Tetromino> CreatePiece() override;
 };
 
 // Спринт: "мешок из 7" (как в современных Тетрисах) - все 7 видов фигур
@@ -26,7 +26,7 @@ class SprintPieceFactory : public PieceFactory
 public:
     SprintPieceFactory();
 
-    std::unique_ptr<Piece> CreatePiece() override;
+    std::unique_ptr<Tetromino> CreatePiece() override;
 
 private:
     void RefillBag();

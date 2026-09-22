@@ -30,13 +30,13 @@ namespace
     // операциями Register/Unregister (как для тем в ShapeAbstractFactory) здесь
     // избыточен: такой реестр нужен, когда набор прототипов может меняться во
     // время выполнения, а у нас он всегда один и тот же.
-    std::array<std::unique_ptr<Piece>, 7>& Prototypes()
+    std::array<std::unique_ptr<Tetromino>, 7>& Prototypes()
     {
-        static std::array<std::unique_ptr<Piece>, 7> prototypes = []
+        static std::array<std::unique_ptr<Tetromino>, 7> prototypes = []
         {
-            std::array<std::unique_ptr<Piece>, 7> result;
+            std::array<std::unique_ptr<Tetromino>, 7> result;
             for (int i{0}; i < 7; ++i)
-                result[i] = std::make_unique<Piece>(SHAPES[i].size, SHAPES[i].cells, i + 1);
+                result[i] = std::make_unique<Tetromino>(SHAPES[i].size, SHAPES[i].cells, i + 1);
             return result;
         }();
         return prototypes;
@@ -45,10 +45,10 @@ namespace
 
 // ---------- NormalPieceFactory ----------
 
-std::unique_ptr<Piece> NormalPieceFactory::CreatePiece()
+std::unique_ptr<Tetromino> NormalPieceFactory::CreatePiece()
 {
     int index = std::rand() % 7;
-    std::unique_ptr<Piece> piece = Prototypes()[index]->Clone();
+    std::unique_ptr<Tetromino> piece = Prototypes()[index]->Clone();
     PlaceAtSpawn(*piece);
     return piece;
 }
@@ -70,13 +70,13 @@ void SprintPieceFactory::RefillBag()
     m_nextIndex = 0;
 }
 
-std::unique_ptr<Piece> SprintPieceFactory::CreatePiece()
+std::unique_ptr<Tetromino> SprintPieceFactory::CreatePiece()
 {
     if (m_nextIndex >= m_bag.size())
         RefillBag();
 
     int index = m_bag[m_nextIndex++];
-    std::unique_ptr<Piece> piece = Prototypes()[index]->Clone();
+    std::unique_ptr<Tetromino> piece = Prototypes()[index]->Clone();
     PlaceAtSpawn(*piece);
     return piece;
 }

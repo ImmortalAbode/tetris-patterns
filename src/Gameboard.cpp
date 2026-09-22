@@ -8,34 +8,30 @@ GameBoard& GameBoard::Instance()
     return instance;
 }
 
-bool GameBoard::Collides(const Piece& piece) const
+bool GameBoard::Collides(const Tetromino& piece) const
 {
-    for (int r{0}; r < piece.Size(); ++r)
+    // Composite: перебираем потомков (Blocks()) - уже готовые занятые клетки,
+    // а не квадрат size x size с проверкой "занята ли эта клетка вообще".
+    for (const Block& block : piece.Blocks())
     {
-        for (int c{0}; c < piece.Size(); ++c)
-        {
-            if (!piece.IsFilled(r, c))
-                continue;
-            int bx{ piece.X() + c };
-            int by{ piece.Y() + r };
-            // Стены и пол.
-            if (bx < 0 || bx >= COLS || by >= ROWS)
-                return true;
-            // Другие блоки (осевшие).
-            if (by >= 0 && m_cells[by][bx])
-                return true;
-        }
+        int bx{ block.Col() };
+        int by{ block.Row() };
+        // Стены и пол.
+        if (bx < 0 || bx >= COLS || by >= ROWS)
+            return true;
+        // Другие блоки (осевшие).
+        if (by >= 0 && m_cells[by][bx])
+            return true;
     }
     return false;
 }
 
-void GameBoard::Lock(const Piece& piece)
+void GameBoard::Lock(const Tetromino& piece)
 {
-    for (int r{0}; r < piece.Size(); ++r)
-        for (int c{0}; c < piece.Size(); ++c)
-            if (piece.IsFilled(r, c))
-                m_cells[piece.Y() + r][piece.X() + c] = piece.ColorIndex();
+    for (const Block& block : piece.Blocks())
+        m_cells[block.Row()][block.Col()] = block.ColorIndex();
 }
+
 
 // Удалить заполненные строки: все, что выше, сдвигается вниз.
 int GameBoard::ClearLines()

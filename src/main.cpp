@@ -2,16 +2,16 @@
 #include "GameBoard.h"
 #include "IInputHandler.h"
 #include "KeyboardInputAdapter.h"
-#include "Piece.h"
 #include "PieceFactories.h"
 #include "ReportGenerators.h"
 #include "ScoreManager.h"
 #include "ShapeAbstractFactory.h"
+#include "Tetromino.h"
 #include "Themes.h"
 
 // ----------------- Логика ----------------
 // Сдвинуть фигуру по горизонтали; если уперлись - вернуть назад.
-void TryMove(Piece& piece, int dx)
+void TryMove(Tetromino& piece, int dx)
 {
     piece.Move(dx, 0);
     if (GameBoard::Instance().Collides(piece))
@@ -19,9 +19,9 @@ void TryMove(Piece& piece, int dx)
 }
 
 // Повернуть фигуру; если после поворота места нет - отменить.
-void RotatePiece(Piece& piece)
+void RotatePiece(Tetromino& piece)
 {
-    Piece backup = piece;
+    Tetromino backup = piece;
     piece.RotateClockwise();
     if (GameBoard::Instance().Collides(piece))
         piece = backup;
@@ -42,7 +42,7 @@ void SaveGameReport()
 // К полю и счету обращаемся через Singleton: передавать их параметрами не нужно.
 // Фигуры дает factory - какой именно фабричный метод вызовется (Normal или Sprint),
 // решили один раз при запуске.
-void MoveDown(std::unique_ptr<Piece>& piece, PieceFactory& factory)
+void MoveDown(std::unique_ptr<Tetromino>& piece, PieceFactory& factory)
 {
     GameBoard& board = GameBoard::Instance();
 
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
     updateTitle();
 
     std::srand(static_cast<unsigned>(std::time(nullptr)));
-    std::unique_ptr<Piece> piece = pieceFactory->CreatePiece();
+    std::unique_ptr<Tetromino> piece = pieceFactory->CreatePiece();
 
     sf::Clock fallClock{};
 
@@ -177,10 +177,10 @@ int main(int argc, char** argv)
                 if (board.Get(r, c))
                     blockStyle->Draw(window, c, r, board.Get(r, c));
 
-        for (int r{0}; r < piece->Size(); ++r)
-            for (int c{0}; c < piece->Size(); ++c)
-                if (piece->IsFilled(r, c))
-                    blockStyle->Draw(window, piece->X() + c, piece->Y() + r, piece->ColorIndex());
+        // Composite: раньше здесь был такой же двойной цикл, как для доски выше
+        // (перебор size x size клеток с проверкой IsFilled). Теперь Tetromino сам
+        // знает, из каких блоков состоит, и рисует себя одним вызовом.
+        piece->Draw(window, *blockStyle);
 
         window.display();
     }
