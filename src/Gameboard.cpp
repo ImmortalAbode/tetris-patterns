@@ -2,6 +2,8 @@
 
 #include <cstring>
 
+#include "CollisionHandlers.h"
+
 GameBoard& GameBoard::Instance()
 {
     static GameBoard instance;
@@ -10,20 +12,10 @@ GameBoard& GameBoard::Instance()
 
 bool GameBoard::Collides(const Tetromino& piece) const
 {
-    // Composite: перебираем потомков (Blocks()) - уже готовые занятые клетки,
-    // а не квадрат size x size с проверкой "занята ли эта клетка вообще".
-    for (const Block& block : piece.Blocks())
-    {
-        int bx{ block.Col() };
-        int by{ block.Row() };
-        // Стены и пол.
-        if (bx < 0 || bx >= COLS || by >= ROWS)
-            return true;
-        // Другие блоки (осевшие).
-        if (by >= 0 && m_cells[by][bx])
-            return true;
-    }
-    return false;
+    // Цепочка строится один раз (как реестр/прототипы в других частях проекта -
+    // тот же прием "ленивая static-переменная внутри функции").
+    static std::unique_ptr<CollisionHandler> chain = BuildCollisionChain();
+    return chain->HandleRequest(piece);
 }
 
 void GameBoard::Lock(const Tetromino& piece)
@@ -31,7 +23,6 @@ void GameBoard::Lock(const Tetromino& piece)
     for (const Block& block : piece.Blocks())
         m_cells[block.Row()][block.Col()] = block.ColorIndex();
 }
-
 
 // Удалить заполненные строки: все, что выше, сдвигается вниз.
 int GameBoard::ClearLines()
