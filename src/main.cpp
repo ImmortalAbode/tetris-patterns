@@ -1,70 +1,15 @@
+#include "CommandHistory.h"
+#include "Commands.h"
 #include "Config.h"
+#include "GameActions.h"
 #include "GameBoard.h"
 #include "IInputHandler.h"
 #include "KeyboardInputAdapter.h"
 #include "PieceFactories.h"
-#include "ReportGenerators.h"
 #include "ScoreManager.h"
 #include "ShapeAbstractFactory.h"
 #include "Tetromino.h"
 #include "Themes.h"
-
-// ----------------- Логика ----------------
-// Сдвинуть фигуру по горизонтали; если уперлись - вернуть назад.
-void TryMove(Tetromino& piece, int dx)
-{
-    piece.Move(dx, 0);
-    if (GameBoard::Instance().Collides(piece))
-        piece.Move(-dx, 0);
-}
-
-// Повернуть фигуру; если после поворота места нет - отменить.
-void RotatePiece(Tetromino& piece)
-{
-    Tetromino backup = piece;
-    piece.RotateClockwise();
-    if (GameBoard::Instance().Collides(piece))
-        piece = backup;
-}
-
-// Сохранить отчет об игре во всех трех представлениях. main здесь работает только
-// с конкретными генераторами (ReportGenerators.h) и ни разу не упоминает конкретный
-// строитель или то, как именно отчет доставляется (консоль/файл/csv) - это решает
-// каждый генератор сам внутри своего CreateBuilder() и Save().
-void SaveGameReport()
-{
-    TextReportGenerator().Generate();
-    HtmlReportGenerator().Generate();
-    CsvReportGenerator().Generate();
-}
-
-// Сдвинуть фигуру вниз на 1; если не получилось - зафиксировать ее и создать новую.
-// К полю и счету обращаемся через Singleton: передавать их параметрами не нужно.
-// Фигуры дает factory - какой именно фабричный метод вызовется (Normal или Sprint),
-// решили один раз при запуске.
-void MoveDown(std::unique_ptr<Tetromino>& piece, PieceFactory& factory)
-{
-    GameBoard& board = GameBoard::Instance();
-
-    piece->Move(0, 1);
-    if (!board.Collides(*piece))
-        return;
-    piece->Move(0, -1);
-
-    board.Lock(*piece);
-    ScoreManager::Instance().AddPiece(piece->ColorIndex());
-    int cleared = board.ClearLines();
-    if (cleared > 0)
-        ScoreManager::Instance().AddLines(cleared);
-
-    piece = factory.CreatePiece();
-    if (board.Collides(*piece))     // новая фигура сразу уперлась - игра окончена.
-    {
-        SaveGameReport();
-        board.Reset();              // рестарт
-        ScoreManager::Instance().Reset();
-    }
-}
 
 int main(int argc, char** argv)
 {
@@ -99,6 +44,9 @@ int main(int argc, char** argv)
     std::unique_ptr<BlockStyle> blockStyle = ShapeAbstractFactory::Instance().CreateBlockStyle();
     std::unique_ptr<GridStyle> gridStyle = ShapeAbstractFactory::Instance().CreateGridStyle();
 
+    // --- Command: история для отмены последнего игрового хода ---
+    CommandHistory history;
+
     // Заголовок окна: тема и счет. shownScore - какой счет сейчас показан в заголовке.
     int shownScore{0};
     auto updateTitle = [&]()
@@ -108,7 +56,7 @@ int main(int argc, char** argv)
             + " | Mode: " + modeName
             + " | Score: " + std::to_string(shownScore)
             + " | Lines: " + std::to_string(ScoreManager::Instance().Lines())
-            + " (T - switch)");
+            + " (T - switch, Backspace - undo)");
 
     };
     updateTitle();
@@ -132,16 +80,24 @@ int main(int argc, char** argv)
                     window.close();
                     break;
                 case InputAction::MoveLeft:
-                    TryMove(*piece, -1);
+                    history.Execute(std::make_unique<MoveLeftCommand>(*piece));
                     break;
                 case InputAction::MoveRight:
-                    TryMove(*piece, 1);
+                    history.Execute(std::make_unique<MoveRightCommand>(*piece));
                     break;
                 case InputAction::SoftDrop:
-                    MoveDown(piece, *pieceFactory);
+                    history.Execute(std::make_unique<DropCommand>(piece, *pieceFactory));
+                    break;
+                case InputAction::HardDrop:
+                    // MacroCommand: собирается и выполняется пошагово внутри
+                    // BuildHardDropCommand, поэтому здесь только запоминаем ее.
+                    history.Record(BuildHardDropCommand(piece, *pieceFactory));
                     break;
                 case InputAction::RotateCW:
-                    RotatePiece(*piece);
+                    history.Execute(std::make_unique<RotateCommand>(*piece));
+                    break;
+                case InputAction::Undo:
+                    history.UndoLast();
                     break;
                 case InputAction::SwitchTheme:
                     // Смена темы: активной становится следующая фабрика из реестра,
@@ -157,6 +113,8 @@ int main(int argc, char** argv)
         }
 
         // --- гравитация ---
+        // Автоматическое падение - не игровое действие игрока, поэтому идет
+        // напрямую через GameActions, минуя команды и историю (его не отменить).
         if (fallClock.getElapsedTime().asSeconds() >= fallInterval)
         {
             MoveDown(piece, *pieceFactory);

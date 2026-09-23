@@ -11,11 +11,13 @@ InputAction KeyboardInputAdapter::PollAction()
         {
             switch (key->code)
             {
-                case sf::Keyboard::Key::Left:  return InputAction::MoveLeft;
-                case sf::Keyboard::Key::Right: return InputAction::MoveRight;
-                case sf::Keyboard::Key::Down:  return InputAction::SoftDrop;
-                case sf::Keyboard::Key::Up:    return InputAction::RotateCW;
-                case sf::Keyboard::Key::T:     return InputAction::SwitchTheme;
+                case sf::Keyboard::Key::Left:      return InputAction::MoveLeft;
+                case sf::Keyboard::Key::Right:     return InputAction::MoveRight;
+                case sf::Keyboard::Key::Down:      return InputAction::SoftDrop;
+                case sf::Keyboard::Key::Space:     return InputAction::HardDrop;
+                case sf::Keyboard::Key::Up:        return InputAction::RotateCW;
+                case sf::Keyboard::Key::Backspace: return InputAction::Undo;
+                case sf::Keyboard::Key::T:         return InputAction::SwitchTheme;
                 default: break;   // прочие клавиши игнорируем, читаем следующее событие
             }
         }

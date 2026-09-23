@@ -28,7 +28,9 @@ enum class InputAction
     MoveLeft,
     MoveRight,
     SoftDrop,
+    HardDrop,
     RotateCW,
+    Undo,
     SwitchTheme,
 };
 
