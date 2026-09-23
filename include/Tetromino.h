@@ -21,6 +21,7 @@ public:
     Tetromino(int size, const char* cells, int colorIndex);
 
     void Draw(sf::RenderTarget& target, const BlockStyle& style) const override;
+    void DrawGhost(sf::RenderTarget& target, const BlockStyle& style) const override;
     bool Occupies(int col, int row) const override;
 
     std::unique_ptr<Tetromino> Clone() const 

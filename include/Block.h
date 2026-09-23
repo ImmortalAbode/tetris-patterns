@@ -15,6 +15,11 @@ public:
         style.Draw(target, m_col, m_row, m_colorIndex);
     }
 
+    void DrawGhost(sf::RenderTarget& target, const BlockStyle& style) const override
+    {
+        style.DrawGhost(target, m_col, m_row, m_colorIndex);
+    }
+
     bool Occupies(int col, int row) const override 
     { 
         return m_col == col && m_row == row; 

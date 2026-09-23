@@ -17,6 +17,12 @@ void Tetromino::Draw(sf::RenderTarget& target, const BlockStyle& style) const
         block.Draw(target, style);
 }
 
+void Tetromino::DrawGhost(sf::RenderTarget& target, const BlockStyle& style) const
+{
+    for (const Block& block : m_blocks)
+        block.DrawGhost(target, style);
+}
+
 // Composite: занимаю ли клетку (col, row) = занимает ли ее хоть один из потомков.
 bool Tetromino::Occupies(int col, int row) const
 {

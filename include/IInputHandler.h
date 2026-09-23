@@ -32,6 +32,8 @@ enum class InputAction
     RotateCW,
     Undo,
     SwitchTheme,
+    Pause,
+    Restart,   // подтвердить экран Game Over и начать заново
 };
 
 // Target: единый интерфейс ввода, не зависящий от конкретного устройства.

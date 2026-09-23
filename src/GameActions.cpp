@@ -42,11 +42,10 @@ bool MoveDown(std::unique_ptr<Tetromino>& piece, PieceFactory& factory)
         ScoreManager::Instance().AddLines(cleared);
 
     piece = factory.CreatePiece();
-    if (board.Collides(*piece))     // новая фигура сразу уперлась - игра окончена.
-    {
-        SaveGameReport();
-        board.Reset();              // рестарт
-        ScoreManager::Instance().Reset();
-    }
+    // Если новая фигура сразу не помещается - это конец игры. MoveDown сюда
+    // не лезет: main сам проверяет board.Collides(*piece) сразу после любого
+    // вызова MoveDown (из гравитации или из команды) и показывает экран
+    // Game Over - отчет сохраняется и поле/счет сбрасываются только тогда,
+    // когда игрок это увидел и подтвердил рестарт (клавиша R).
     return false;
 }

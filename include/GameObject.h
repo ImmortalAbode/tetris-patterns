@@ -34,6 +34,10 @@ public:
 
     virtual void Draw(sf::RenderTarget& target, const BlockStyle& style) const = 0;
 
+    // То же дерево, но в режиме "призрака" (см. BlockStyle::DrawGhost) - для
+    // проекции падающей фигуры на дно поля.
+    virtual void DrawGhost(sf::RenderTarget& target, const BlockStyle& style) const = 0;
+
     // Занимает ли объект клетку поля (col, row)? Используется для проверки коллизий.
     virtual bool Occupies(int col, int row) const = 0;
 };

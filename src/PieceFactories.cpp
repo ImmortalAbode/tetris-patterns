@@ -45,12 +45,25 @@ namespace
 
 // ---------- NormalPieceFactory ----------
 
+// ---------- NormalPieceFactory ----------
+
+// Вид следующей фигуры выбирается заранее (а не в момент CreatePiece()),
+// чтобы PeekNext() было чем показать до того, как фигуру реально спросят.
+NormalPieceFactory::NormalPieceFactory() : m_nextType{std::rand() % 7}
+{
+}
+
 std::unique_ptr<Tetromino> NormalPieceFactory::CreatePiece()
 {
-    int index = std::rand() % 7;
-    std::unique_ptr<Tetromino> piece = Prototypes()[index]->Clone();
+    std::unique_ptr<Tetromino> piece = Prototypes()[m_nextType]->Clone();
     PlaceAtSpawn(*piece);
+    m_nextType = std::rand() % 7;   // сразу выбираем следующую - для будущего PeekNext()
     return piece;
+}
+
+std::unique_ptr<Tetromino> NormalPieceFactory::PeekNext()
+{
+    return Prototypes()[m_nextType]->Clone();
 }
 
 // ---------- SprintPieceFactory ----------
@@ -79,4 +92,14 @@ std::unique_ptr<Tetromino> SprintPieceFactory::CreatePiece()
     std::unique_ptr<Tetromino> piece = Prototypes()[index]->Clone();
     PlaceAtSpawn(*piece);
     return piece;
+}
+
+std::unique_ptr<Tetromino> SprintPieceFactory::PeekNext()
+{
+    // Мешок закончился - перемешиваем заранее, PeekNext() и следующий
+    // CreatePiece() после этого будут согласованы (оба увидят новый мешок).
+    if (m_nextIndex >= m_bag.size())
+        RefillBag();
+
+    return Prototypes()[m_bag[m_nextIndex]]->Clone();
 }

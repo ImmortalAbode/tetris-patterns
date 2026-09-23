@@ -48,6 +48,18 @@ namespace
             rect.setFillColor(CLASSIC_COLORS[colorIndex]);
             target.draw(rect);
         }
+
+        // Призрак: тот же квадрат, но без заливки - только полупрозрачный контур.
+        void DrawGhost(sf::RenderTarget& target, int cellX, int cellY, int colorIndex) const override
+        {
+            const sf::Color& color = CLASSIC_COLORS[colorIndex];
+            sf::RectangleShape rect(sf::Vector2f(CELL - 1, CELL - 1));
+            rect.setPosition(sf::Vector2f(cellX * CELL, cellY * CELL));
+            rect.setFillColor(sf::Color::Transparent);
+            rect.setOutlineThickness(2.f);
+            rect.setOutlineColor(sf::Color(color.r, color.g, color.b, 160));
+            target.draw(rect);
+        }
     };
 
     // Черный фон и темно-серые пустые клетки.
@@ -98,6 +110,18 @@ namespace
             rect.setFillColor(sf::Color(color.r / 5, color.g / 5, color.b / 5));
             rect.setOutlineThickness(3.f);
             rect.setOutlineColor(color);
+            target.draw(rect);
+        }
+
+        // Призрак: без свечения и заливки - тонкий тусклый контур.
+        void DrawGhost(sf::RenderTarget& target, int cellX, int cellY, int colorIndex) const override
+        {
+            const sf::Color& color = NEON_COLORS[colorIndex];
+            sf::RectangleShape rect(sf::Vector2f(CELL - 8, CELL - 8));
+            rect.setPosition(sf::Vector2f(cellX * CELL + 4, cellY * CELL + 4));
+            rect.setFillColor(sf::Color::Transparent);
+            rect.setOutlineThickness(2.f);
+            rect.setOutlineColor(sf::Color(color.r, color.g, color.b, 90));
             target.draw(rect);
         }
     };
@@ -161,6 +185,17 @@ namespace
             sf::RectangleShape rect(sf::Vector2f(CELL - 1, CELL - 1));
             rect.setPosition(sf::Vector2f(cellX * CELL, cellY * CELL));
             rect.setFillColor(RETRO_COLOR);
+            target.draw(rect);
+        }
+
+        // Призрак: тусклый контур в том же фосфорном зеленом.
+        void DrawGhost(sf::RenderTarget& target, int cellX, int cellY, int /*colorIndex*/) const override
+        {
+            sf::RectangleShape rect(sf::Vector2f(CELL - 1, CELL - 1));
+            rect.setPosition(sf::Vector2f(cellX * CELL, cellY * CELL));
+            rect.setFillColor(sf::Color::Transparent);
+            rect.setOutlineThickness(2.f);
+            rect.setOutlineColor(sf::Color(RETRO_COLOR.r, RETRO_COLOR.g, RETRO_COLOR.b, 120));
             target.draw(rect);
         }
     };

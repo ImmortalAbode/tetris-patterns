@@ -18,6 +18,8 @@ InputAction KeyboardInputAdapter::PollAction()
                 case sf::Keyboard::Key::Up:        return InputAction::RotateCW;
                 case sf::Keyboard::Key::Backspace: return InputAction::Undo;
                 case sf::Keyboard::Key::T:         return InputAction::SwitchTheme;
+                case sf::Keyboard::Key::P:         return InputAction::Pause;
+                case sf::Keyboard::Key::R:         return InputAction::Restart;
                 default: break;   // прочие клавиши игнорируем, читаем следующее событие
             }
         }

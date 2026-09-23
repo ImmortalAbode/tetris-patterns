@@ -43,13 +43,19 @@ public:
         return m_mode; 
     }
 
-    int Score() const 
-    { 
-        return m_score; 
+    int Score() const
+    {
+        return m_score;
     }
-    int Lines() const 
-    { 
-        return m_lines; 
+    int Lines() const
+    {
+        return m_lines;
+    }
+    // Уровень растет каждые 10 убранных линий (обычное соглашение Тетриса).
+    // Отдельного поля не заводим - значение всегда однозначно следует из m_lines.
+    int Level() const
+    {
+        return m_lines / 10 + 1;
     }
     int PieceCount(int colorIndex) const 
     { 

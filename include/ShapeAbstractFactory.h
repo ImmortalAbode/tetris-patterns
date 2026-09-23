@@ -43,6 +43,12 @@ public:
     virtual ~BlockStyle() = default;
     virtual std::unique_ptr<BlockStyle> Clone() const = 0;
     virtual void Draw(sf::RenderTarget& target, int cellX, int cellY, int colorIndex) const = 0;
+
+    // Второй режим отрисовки того же продукта - "призрак" (проекция фигуры
+    // на дно поля перед падением): контур того же цвета, без заливки, у
+    // каждой темы свой. Клиенту не нужно ничего дублировать - клетка та же,
+    // только зовется другой метод у уже существующего продукта фабрики.
+    virtual void DrawGhost(sf::RenderTarget& target, int cellX, int cellY, int colorIndex) const = 0;
 };
 
 // Абстрактный продукт B и прототип: стиль игрового поля (фон и сетка).
