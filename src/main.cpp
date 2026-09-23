@@ -44,7 +44,8 @@ int main(int argc, char** argv)
         pieceFactory = std::make_unique<NormalPieceFactory>();
         modeName = "Normal";
     }
-    const float baseFallInterval = sprintMode ? 0.25f : 0.5f;   // секунд между автоматическими шагами вниз на 1 уровне
+    // Не const: клавиша M (InputAction::SwitchMode) пересчитывает при смене режима.
+    float baseFallInterval = sprintMode ? 0.25f : 0.5f;   // секунд между автоматическими шагами вниз на 1 уровне
     ScoreManager::Instance().SetMode(modeName);             // для отчета (Text/Html/Csv) - см. BuildHeader()
 
     sf::RenderWindow window(sf::VideoMode({COLS * CELL + SIDEBAR_WIDTH, ROWS * CELL}), "Tetris");
@@ -118,7 +119,7 @@ int main(int argc, char** argv)
     // "T - тема, Backspace - отмена" не влезает и обрезается краем окна.
     sf::Text hint(font, "", 13);
     hint.setFillColor(labelColor);
-    hint.setPosition(sf::Vector2f(panelX, ROWS * CELL - 120.f));
+    hint.setPosition(sf::Vector2f(panelX, ROWS * CELL - 136.f));
 
     // Центрирует текст (по его собственным границам) вокруг точки (x, y) -
     // общий помощник для экранов паузы и Game Over, у которых текст всегда
@@ -184,6 +185,7 @@ int main(int argc, char** argv)
             "Режим: " + modeName + "\n"
             "\n"
             "T - тема\n"
+            "M - режим\n"
             "P - пауза\n"
             "Backspace - отмена"));
     };
@@ -245,6 +247,32 @@ int main(int argc, char** argv)
                     ShapeAbstractFactory::SelectNext();
                     blockStyle = ShapeAbstractFactory::Instance().CreateBlockStyle();
                     gridStyle = ShapeAbstractFactory::Instance().CreateGridStyle();
+                    updateHud();
+                    break;
+                case InputAction::SwitchMode:
+                    // Смена режима (Factory Method: меняем конкретного Creator'а)
+                    // не бывает "тихой" - Normal и Sprint слишком разные по
+                    // сложности (разная скорость, разный порядок фигур), поэтому
+                    // вместе с режимом сбрасываем всю игру, как при рестарте.
+                    sprintMode = !sprintMode;
+                    if (sprintMode)
+                    {
+                        pieceFactory = std::make_unique<SprintPieceFactory>();
+                        modeName = "Sprint";
+                    }
+                    else
+                    {
+                        pieceFactory = std::make_unique<NormalPieceFactory>();
+                        modeName = "Normal";
+                    }
+                    baseFallInterval = sprintMode ? 0.25f : 0.5f;
+                    ScoreManager::Instance().SetMode(modeName);
+                    GameBoard::Instance().Reset();
+                    ScoreManager::Instance().Reset();
+                    piece = pieceFactory->CreatePiece();
+                    paused = false;
+                    gameOver = false;
+                    fallClock.restart();
                     updateHud();
                     break;
                 case InputAction::Pause:

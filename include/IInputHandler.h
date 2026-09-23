@@ -32,6 +32,7 @@ enum class InputAction
     RotateCW,
     Undo,
     SwitchTheme,
+    SwitchMode,
     Pause,
     Restart,   // подтвердить экран Game Over и начать заново
 };
